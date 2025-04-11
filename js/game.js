@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
-// Ground class (unchanged)
+// Ground class (updated)
 class Ground {
     constructor() {
         this.x = 0;
@@ -14,8 +14,8 @@ class Ground {
     }
 
     draw(ctx) {
-        ctx.fillStyle = 'green';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        // Draw the ground using the ground sprite
+        ctx.drawImage(sprites.ground, this.x, this.y, this.width, this.height);
     }
 }
 
@@ -47,7 +47,7 @@ document.addEventListener('keyup', (e) => {
 
 function generatePlatform() {
     let lastPlatform = platforms[platforms.length - 1] || { x: 200, y: canvas.height - 100, width: 200 };
-    
+
     let newX = lastPlatform.x + Math.random() * 200 + 100;
     let newY;
 
@@ -55,7 +55,7 @@ function generatePlatform() {
         newY = canvas.height - Math.random() * 300 - 50;
     } while (Math.abs(newY - lastPlatform.y) < 80);
 
-    let newPlatform = { x: newX, y: newY, width: 150, height: 20 };
+    let newPlatform = { x: newX, y: newY, width: 150, height: 20 }; // Keep width and height for collision detection
     platforms.push(newPlatform);
 
     if (Math.random() > 0.5) {
@@ -73,41 +73,47 @@ const sprites = {
     platform: new Image(),
     ground: new Image(),
     background: new Image()
-}
+};
 
-// set the source image for each sprite
 sprites.player.src = '../assets/player.png';
 sprites.platform.src = '../assets/platform.png';
 sprites.ground.src = '../assets/ground.png';
 sprites.background.src = '../assets/background.png';
 
-// variable to track the number of images loaded
+// Ensure the background sprite is loaded correctly
+sprites.background.addEventListener('load', () => {
+    console.log('Background image loaded successfully');
+});
+sprites.background.addEventListener('error', () => {
+    console.error('Failed to load background image');
+});
+
 let imagesLoaded = 0;
 const totalImages = Object.keys(sprites).length;
 
-// function to handle images loading
-function onImageLoad(){
+function onImageLoad() {
     imagesLoaded++;
-    // start the game loop only when all images are loaded
-    if(imagesLoaded === totalImages){
-        gameLoop();
+    if (imagesLoaded === totalImages) {
+        gameLoop(); // Start the game loop when all images are loaded
     }
 }
 
-// add load event listeners to each image
-for(let key in sprites){
+for (let key in sprites) {
     sprites[key].addEventListener('load', onImageLoad);
-    sprites[key].addEventListener('error', 
-        () => {
-            console.error(`Failed to load image: ${sprites[key].src}`);
-        }
-    );
+    sprites[key].addEventListener('error', () => {
+        console.error(`Failed to load image: ${sprites[key].src}`);
+    });
 }
 
-
 function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw the background using the background sprite
+    if (sprites.background.complete) {
+        ctx.drawImage(sprites.background, 0, 0, canvas.width, canvas.height);
+    } else {
+        console.error('Background image not loaded yet');
+    }
 
+    // Clear and update other game elements
     platforms.forEach(p => p.x -= gameSpeed);
     collectibles.forEach(c => c.x -= gameSpeed);
 
@@ -120,8 +126,10 @@ function gameLoop() {
 
     ground.draw(ctx);
 
-    ctx.fillStyle = 'brown';
-    platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+    // Draw platforms using the platform sprite
+    platforms.forEach(p => {
+        ctx.drawImage(sprites.platform, p.x, p.y, p.width, p.height);
+    });
 
     collectibles.forEach(c => {
         if (c.checkCollision(player)) {
@@ -138,5 +146,3 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
-
-// gameLoop();
